@@ -1,0 +1,6 @@
+{
+  "name": "AMStream",
+  "description": "Stream anime, movies, and TV series ad-free with synchronized Watch Rooms and Firebase cloud library sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

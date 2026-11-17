@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="referrer" content="unsafe-url">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AMStream Client Player Shield</title>
+  <style>
+    html, body, iframe { margin: 0; padding: 0; width: 100%; height: 100%; border: 0; background: #000; overflow: hidden; }
+    iframe { display: block; }
+    #shieldNote {
+      position: fixed; left: 16px; right: 16px; bottom: 12%;
+      text-align: center; color: #f1f5f9;
+      font: 500 14px/1.5 system-ui, -apple-system, sans-serif;
+      text-shadow: 0 1px 4px #000;
+      opacity: 0; transition: opacity .35s; pointer-events: none;
+    }
+    #shieldNote.show { opacity: .95; }
+  </style>
+  <script>
+    // Client-side popup & navigation lock inside shield shell
+    try {
+      Object.defineProperty(window, 'open', {
+        configurable: false,
+        writable: false,
+        value: function () {
+          return { closed: false, focus: function(){}, blur: function(){}, close: function(){}, postMessage: function(){}, location: {} };
+        }
+      });
+    } catch (_) {}
+  </script>
+</head>
+<body>
+  <iframe
+    id="p"
+    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; screen-wake-lock; pointer-lock"
+    allowfullscreen
+    referrerpolicy="unsafe-url"
+  ></iframe>
+  <div id="shieldNote" role="status" aria-live="polite"></div>
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var generic = String(q.get('src') || '')
+        .replace(/^https?:\/\//i, 'https://')
+        .replace(/[^\w.\/:?=&%~+-]/g, '');
+
+      var GENERIC_OK = /^https:\/\/[a-z0-9.-]*\b(vidspark\.to|flixer\.gd|flixer\.su|vidlink\.pro|megaplay\.buzz|anipub\.org)\//i;
+      var SANDBOX_LOCKED_HOST = /(^|\.)(vidspark\.to|flixer\.gd|flixer\.su)$/i;
+
+      var lang = q.get('lang') === 'dub' ? 'dub' : 'sub';
+      var ep = (q.get('ep') || '1').replace(/[^\d]/g, '') || '1';
+      var mal = (q.get('mal') || '').replace(/[^\d]/g, '');
+      var ani = (q.get('ani') || '').replace(/[^\d]/g, '');
+      var embed = (q.get('embed') || '').replace(/[^\d]/g, '');
+      var t = Math.max(0, Math.floor(+q.get('t') || 0));
+
+      function mirrorSubPath() {
+        if (embed) return '/stream/s-2/' + embed + '/' + lang;
+        if (mal) return '/stream/mal/' + mal + '/' + ep + '/' + lang;
+        if (ani) return '/stream/ani/' + ani + '/' + ep + '/' + lang;
+        return '';
+      }
+
+      function normalizeUpstream(upstreamHref) {
+        try {
+          var u = new URL(upstreamHref);
+          if (u.hostname.indexOf('megaplay.buzz') !== -1 && u.pathname.indexOf('/stream/') === 0) {
+            u.searchParams.set('bypass_host', '1');
+          }
+          if (t > 0 && /(vidlink\.pro|vidspark\.to)$/i.test(u.hostname) && !u.searchParams.has('startAt')) {
+            u.searchParams.set('startAt', String(t));
+          }
+          return u.href;
+        } catch (_) {
+          return upstreamHref;
+        }
+      }
+
+      var rawUpstream = '';
+      if (generic && GENERIC_OK.test(generic)) rawUpstream = generic;
+      else if (mirrorSubPath()) rawUpstream = 'https://megaplay.buzz' + mirrorSubPath();
+
+      var src = rawUpstream ? normalizeUpstream(rawUpstream) : '';
+
+      var f = document.getElementById('p');
+      var note = document.getElementById('shieldNote');
+      function flashNote(text) {
+        note.textContent = text;
+        note.classList.add('show');
+        setTimeout(function () { note.classList.remove('show'); }, 5000);
+      }
+
+      if (src) {
+        var useSandbox = false;
+        try {
+          useSandbox = SANDBOX_LOCKED_HOST.test(new URL(src).hostname);
+        } catch (_) {}
+
+        if (useSandbox) {
+          // Verified sandbox-compatible Movie/TV hosts: omit allow-popups and allow-top-navigation so popups & redirects are 100% blocked
+          f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+        } else {
+          // Keep Anime servers unchanged
+          f.removeAttribute('sandbox');
+        }
+        f.src = src;
+      }
+
+      var loadGen = 0;
+      var spokeNow = false;
+      var pendingRoomControls = [];
+
+      function deliverRoomControl(message) {
+        try {
+          if (!f.contentWindow) return false;
+          f.contentWindow.postMessage(message, '*');
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function flushRoomControls() {
+        while (pendingRoomControls.length && spokeNow) {
+          var next = pendingRoomControls[0];
+          if (!deliverRoomControl(next)) break;
+          pendingRoomControls.shift();
+        }
+      }
+
+      function normalizeExternalPlayerMessage(raw) {
+        if (!raw || typeof raw !== 'object') return raw;
+        // Bridge VidLink / VidFast telemetry events into standard AMStream telemetry when present
+        if (raw.type === 'PLAYER_EVENT' && raw.data && typeof raw.data === 'object') {
+          var d = raw.data;
+          var ev = String(d.event || '').toLowerCase();
+          if (ev === 'play' || ev === 'pause' || ev === 'seeked' || ev === 'timeupdate' || ev === 'ended') {
+            return {
+              event: ev === 'seeked' ? 'seek' : ev === 'timeupdate' ? 'time' : ev === 'ended' ? 'complete' : ev,
+              time: Number(d.currentTime) || 0,
+              duration: Number(d.duration) || 0,
+            };
+          }
+        }
+        return raw;
+      }
+
+      window.addEventListener('message', function (e) {
+        if (e.source === f.contentWindow) {
+          spokeNow = true;
+          if (pendingRoomControls.length) flushRoomControls();
+          if (!src) return;
+          var payload = e.data;
+          if (typeof payload === 'string') {
+            try { payload = JSON.parse(payload); } catch (_) {}
+          }
+          var normalized = normalizeExternalPlayerMessage(payload);
+          try { parent.postMessage(normalized, '*'); } catch (_) {}
+          return;
+        }
+        if (e.source === parent && e.origin === location.origin) {
+          var data = e.data;
+          if (!data || data.type !== 'ANIMESTREAM_ROOM_CONTROL') return;
+          var action = String(data.action || '').toLowerCase();
+          if (['play', 'pause', 'seek', 'volume'].indexOf(action) === -1) return;
+          var volume = Math.max(0, Math.min(1, Number(data.volume != null ? data.volume : data.position_seconds) || 0));
+          var message = action === 'seek'
+            ? { event: 'seek', time: Math.max(0, Number(data.position_seconds) || 0) }
+            : action === 'volume'
+              ? { event: 'volume', volume: volume, value: volume, percent: Math.round(volume * 100) }
+              : { event: action };
+          if (spokeNow) {
+            deliverRoomControl(message);
+          } else {
+            pendingRoomControls.push(message);
+            if (pendingRoomControls.length > 8) pendingRoomControls = pendingRoomControls.slice(-8);
+          }
+        }
+      });
+
+      f.addEventListener('load', function () {
+        if (!src) return;
+        if (!/megaplay\.buzz/i.test(rawUpstream)) return;
+        spokeNow = false;
+        var g = ++loadGen;
+        setTimeout(function () {
+          if (g !== loadGen || spokeNow) return;
+          try { f.src = src; } catch (_) {}
+          var g2 = ++loadGen;
+          setTimeout(function () {
+            if (g2 !== loadGen || spokeNow) return;
+            flashNote('This stream took too long to respond. Try switching server or language.');
+            try { parent.postMessage({ type: 'mp-miss' }, '*'); } catch (_) {}
+          }, 14000);
+        }, 14000);
+      });
+
+      if (t > 0) {
+        var seeked = false;
+        window.addEventListener('message', function (e) {
+          if (e.source !== f.contentWindow || seeked) return;
+          var s = typeof e.data === 'string' ? e.data : JSON.stringify(e.data || '');
+          if (s.indexOf('PLAYER_READY') >= 0) {
+            seeked = true;
+            setTimeout(function () {
+              deliverRoomControl({ event: 'seek', time: t });
+            }, 900);
+          }
+        });
+        setTimeout(function () {
+          if (!seeked) deliverRoomControl({ event: 'seek', time: t });
+        }, 6500);
+      }
+    })();
+  </script>
+</body>
+</html>

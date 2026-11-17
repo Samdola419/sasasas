@@ -1,0 +1,430 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user account profile isolated to the owner UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        },
+        "avatarUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "email", "createdAt", "updatedAt"]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "Synced playback and reader preferences for an authenticated user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lang": {
+          "type": "string",
+          "enum": ["sub", "dub"]
+        },
+        "autoNext": {
+          "type": "boolean"
+        },
+        "mangaSaver": {
+          "type": "boolean"
+        },
+        "localVolume": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "lang", "autoNext", "mangaSaver", "updatedAt"]
+    },
+    "LibraryItem": {
+      "title": "LibraryItem",
+      "description": "A saved title in My List or Continue Watching.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "mediaKey": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": ["anime", "movie", "tv"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "payload": {
+          "type": "object",
+          "description": "Serialized catalog metadata for card rendering."
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "mediaKey", "mediaType", "title", "payload", "clientUpdatedAt", "updatedAt"]
+    },
+    "WatchProgress": {
+      "title": "WatchProgress",
+      "description": "Per-title watch position, season, and episode progress.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "progressKey": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "episodeIndex": {
+          "type": "number"
+        },
+        "season": {
+          "type": "number"
+        },
+        "aniId": {
+          "type": "number"
+        },
+        "positionSeconds": {
+          "type": "number"
+        },
+        "durationSeconds": {
+          "type": "number"
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "progressKey", "clientUpdatedAt", "updatedAt"]
+    },
+    "MangaProgress": {
+      "title": "MangaProgress",
+      "description": "Per-manga last read chapter identifier.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "mangaId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "chapterId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "mangaId", "chapterId", "clientUpdatedAt", "updatedAt"]
+    },
+    "WatchRoom": {
+      "title": "WatchRoom",
+      "description": "Authoritative Watch Room state and durable playback checkpoint.",
+      "type": "object",
+      "properties": {
+        "roomId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "pattern": "^[A-Z0-9]{8}$"
+        },
+        "hostUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "ended"]
+        },
+        "memberCount": {
+          "type": "number"
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": ["anime", "movie", "tv"]
+        },
+        "media": {
+          "type": "object"
+        },
+        "playbackState": {
+          "type": "string",
+          "enum": ["playing", "paused"]
+        },
+        "positionSeconds": {
+          "type": "number"
+        },
+        "playbackSeq": {
+          "type": "number"
+        },
+        "playbackUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hostSigningPublicKey": {
+          "type": "string",
+          "maxLength": 400
+        },
+        "channelToken": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128
+        },
+        "revision": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastActivityAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "roomId",
+        "code",
+        "hostUid",
+        "status",
+        "memberCount",
+        "mediaType",
+        "media",
+        "playbackState",
+        "positionSeconds",
+        "playbackSeq",
+        "playbackUpdatedAt",
+        "channelToken",
+        "revision",
+        "createdAt",
+        "lastActivityAt",
+        "expiresAt"
+      ]
+    },
+    "RoomCodeLookup": {
+      "title": "RoomCodeLookup",
+      "description": "Non-enumerable lookup mapping an 8-char invite code to its active room.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8,
+          "pattern": "^[A-Z0-9]{8}$"
+        },
+        "roomId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "hostUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "ended"]
+        },
+        "memberCount": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["code", "roomId", "hostUid", "status", "memberCount", "createdAt", "expiresAt"]
+    },
+    "RoomMember": {
+      "title": "RoomMember",
+      "description": "Membership record inside a Watch Room (max 4 active members).",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "role": {
+          "type": "string",
+          "enum": ["host", "guest"]
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "role", "joinedAt", "lastSeenAt"]
+    },
+    "RoomMessage": {
+      "title": "RoomMessage",
+      "description": "Persisted chat message inside a Watch Room (max 500 chars).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "roomId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "roomId", "senderUid", "senderName", "body", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account profile document."
+    },
+    "/users/{uid}/preferences/{prefId}": {
+      "schema": { "$ref": "#/entities/UserPreferences" },
+      "description": "User playback and reader settings."
+    },
+    "/users/{uid}/myList/{itemId}": {
+      "schema": { "$ref": "#/entities/LibraryItem" },
+      "description": "User My List saved titles."
+    },
+    "/users/{uid}/continueWatching/{itemId}": {
+      "schema": { "$ref": "#/entities/LibraryItem" },
+      "description": "User Continue Watching entries."
+    },
+    "/users/{uid}/watchProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/WatchProgress" },
+      "description": "User per-title watch position and episode memory."
+    },
+    "/users/{uid}/mangaProgress/{mangaId}": {
+      "schema": { "$ref": "#/entities/MangaProgress" },
+      "description": "User manga reading progress."
+    },
+    "/roomCodes/{code}": {
+      "schema": { "$ref": "#/entities/RoomCodeLookup" },
+      "description": "Non-listable invite code lookup to active room."
+    },
+    "/rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/WatchRoom" },
+      "description": "Active Watch Room authoritative state."
+    },
+    "/rooms/{roomId}/members/{uid}": {
+      "schema": { "$ref": "#/entities/RoomMember" },
+      "description": "Active members in a Watch Room (max 4)."
+    },
+    "/rooms/{roomId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/RoomMessage" },
+      "description": "Persistent chat messages for a Watch Room."
+    }
+  }
+}

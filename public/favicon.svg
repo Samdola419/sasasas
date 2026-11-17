@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="amBg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141724"/>
+      <stop offset="100%" stop-color="#07080D"/>
+    </linearGradient>
+    <linearGradient id="amCrimson" x1="16" y1="14" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="50%" stop-color="#E11D48"/>
+      <stop offset="100%" stop-color="#9F1239"/>
+    </linearGradient>
+    <linearGradient id="amBeam" x1="28" y1="24" x2="50" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FFE4E6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#amBg)"/>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="14.5" stroke="#FB7185" stroke-opacity="0.28" stroke-width="1.5"/>
+  <!-- Geometric A-Prism Cinema Aperture -->
+  <path d="M16 48L28.8 16H35.2L48 48H40.6L32 25.4L23.4 48H16Z" fill="url(#amCrimson)"/>
+  <!-- Stream Beam Play Notch -->
+  <path d="M27.5 34.5L39.5 41L27.5 47.5V34.5Z" fill="url(#amBeam)"/>
+</svg>

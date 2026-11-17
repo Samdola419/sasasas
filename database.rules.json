@@ -1,0 +1,42 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "roomPresence": {
+      "$roomId": {
+        ".read": "auth != null && root.child('roomAccess').child($roomId).child(auth.uid).val() === true",
+        "$uid": {
+          "$connectionId": {
+            ".write": "auth != null && auth.uid === $uid && root.child('roomAccess').child($roomId).child(auth.uid).val() === true",
+            ".validate": "newData.val() === null || (newData.hasChildren(['online', 'lastSeen']) && newData.child('online').isBoolean() && newData.child('lastSeen').isNumber())"
+          }
+        }
+      }
+    },
+    "roomAccess": {
+      "$roomId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
+    },
+    "roomMeta": {
+      "$roomId": {
+        ".read": "auth != null && root.child('roomAccess').child($roomId).child(auth.uid).val() === true",
+        ".write": false
+      }
+    },
+    "roomLive": {
+      "$roomId": {
+        "$channelToken": {
+          ".read": "auth != null && root.child('roomAccess').child($roomId).child(auth.uid).val() === true && root.child('roomMeta').child($roomId).child('channelToken').val() === $channelToken",
+          "playback": {
+            ".write": "auth != null && root.child('roomMeta').child($roomId).child('hostUid').val() === auth.uid && root.child('roomMeta').child($roomId).child('channelToken').val() === $channelToken",
+            ".validate": "newData.hasChildren(['hostUid', 'playbackSeq', 'playbackState', 'positionSeconds', 'sentAt', 'signature']) && newData.child('hostUid').val() === auth.uid && newData.child('playbackSeq').isNumber() && (!data.exists() || newData.child('playbackSeq').val() > data.child('playbackSeq').val()) && (newData.child('playbackState').val() === 'playing' || newData.child('playbackState').val() === 'paused') && newData.child('positionSeconds').isNumber() && newData.child('positionSeconds').val() >= 0 && newData.child('positionSeconds').val() <= 86400"
+          }
+        }
+      }
+    }
+  }
+}

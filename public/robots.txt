@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_p/
+Disallow: /ws/
+Disallow: /account
+Disallow: /room/
+
+Sitemap: /sitemap.xml
